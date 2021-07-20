@@ -1,0 +1,7 @@
+*.pyc
+*.sock
+
+__pycache__
+
+model
+

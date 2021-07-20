@@ -1,0 +1,14 @@
+[Unit]
+Description=Gunicorn instance to serve ask_detection_svc
+After=network.target
+
+[Service]
+User=sameer_narang_extra_3
+Group=www-data
+WorkingDirectory=/home/sameer_narang_extra_3/predict_asks
+Environment="PATH=/home/sameer_narang_extra_3/nlp-svc-env/bin"
+ExecStart=/home/sameer_narang_extra_3/nlp-svc-env/bin/gunicorn --workers 3 --bind unix:flask_project.sock -m 007 wsgi:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

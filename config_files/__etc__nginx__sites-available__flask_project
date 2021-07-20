@@ -1,0 +1,8 @@
+server {
+    listen 80;
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/home/sameer_narang_extra_3/predict_asks/flask_project.sock;
+    }
+}

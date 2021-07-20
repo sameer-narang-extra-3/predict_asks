@@ -1,0 +1,94 @@
+sudo apt-get install python3-pip
+sudo apt-get install python3-venv
+python3 -m venv nlp-svc-env
+source nlp-svc-env/bin/activate
+pip install flask
+mkdir predict_asks
+cd predict_asks
+
+
+--------------------------------------------------------
+vim ask_detection_svc.py -->
+
+
+from flask import Flask
+  
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return 'Web App with Python Flask - hahahaha!\n\n'
+
+app.run(host='0.0.0.0', port=5001)
+--------------------------------------------------------
+
+
+python ask_detection_svc.py
+cd
+sudo apt-get install nginx-full
+sudo /etc/init.d/nginx start
+
+# remove default configuration file
+sudo rm /etc/nginx/sites-enabled/default
+
+# create a new site configuration file
+sudo touch /etc/nginx/sites-available/flask_project
+sudo ln -s /etc/nginx/sites-available/flask_project /etc/nginx/sites-enabled/flask_project
+
+
+
+--------------------------------------------------------
+server {
+    listen 80;
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/home/sameer_narang_extra_3/predict_asks/flask_project.sock;
+    }
+}
+--------------------------------------------------------
+
+sudo /etc/init.d/nginx restart
+
+
+### - to check if needed - sudo apt-get install gunicorn
+cd predict_asks
+# gunicorn actually listens to the port and forwards requests to flask/ django applications
+gunicorn --bind 0.0.0.0:5001 wsgi:app --daemon
+
+
+
+--------------------------------------------------------
+sudo vim /etc/systemd/system/ask_detection_svc.service --->
+
+[Unit]
+Description=Gunicorn instance to serve ask_detection_svc
+After=network.target
+
+[Service]
+User=sameer_narang_extra_3
+Group=www-data
+WorkingDirectory=/home/sameer_narang_extra_3/predict_asks
+Environment="PATH=/home/sameer_narang_extra_3/nlp-svc-env/bin"
+ExecStart=/home/sameer_narang_extra_3/nlp-svc-env/bin/gunicorn --workers 3 --bind unix:myproject.sock -m 007 wsgi:app
+
+[Install]
+WantedBy=multi-user.target
+--------------------------------------------------------
+
+
+# systemctl and supervisorctl are used to ensure that services start up when the machine is restarted
+sudo systemctl start ask_detection_svc
+sudo systemctl enable ask_detection_svc
+
+also useful: sudo systemctl status ask_detection_svc
+also useful: sudo systemctl restart ask_detection_svc
+
+
+pip install torch --no-cache-dir
+pip install transformers --no-cache-dir
+
+
+the webserver should now be accessible via port 80 where nginx listens and forwards requests internally to 5001
+where gunicorn picks them up and forwards to flask for processing
+
